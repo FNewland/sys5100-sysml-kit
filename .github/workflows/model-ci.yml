@@ -1,0 +1,82 @@
+# SYS 5100 model CI: on every push, parse the team's SysML v2 model with the OMG SysML v2
+# Pilot Implementation (EPL-2.0) and run the course checks C1-C8 (./kit check), regenerate the
+# gate tables (./kit gen-table) and lint requirement wording (./kit lint, advisory).
+# The gate is read from gates/CURRENT (G2 by default). Tables are uploaded as an artifact.
+name: model-ci
+
+on:
+  push:
+    paths: ["model/**", "lib/**", "tools/**", "gates/CURRENT", "kit", ".github/workflows/model-ci.yml"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      gate:
+        description: "Gate rules to apply (G1-G4); blank = gates/CURRENT"
+        required: false
+
+env:
+  SYSML_PILOT_VERSION: "0.62.0"        # pin per term; bump deliberately
+  KIT_GATE: ${{ github.event.inputs.gate }}
+
+jobs:
+  model-ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache SysML v2 pilot implementation
+        uses: actions/cache@v4
+        with:
+          path: ext/kernel
+          key: sysml-pilot-${{ env.SYSML_PILOT_VERSION }}
+
+      - name: Fetch pilot implementation (conda-forge package, no conda needed)
+        run: |
+          pip install --quiet zstandard
+          python tools/fetch_pilot.py --version "$SYSML_PILOT_VERSION" --dest ext/kernel
+
+      - name: Install reqlint
+        run: pip install --quiet -e tools/vendor/reqlint
+
+      - name: Is there a model yet?
+        id: model
+        run: |
+          if compgen -G "model/**/*.sysml" > /dev/null || compgen -G "model/*.sysml" > /dev/null; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No model yet. Start one with ./kit init <starter> and push."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Model check (C1-C8)
+        if: steps.model.outputs.present == 'true'
+        run: ./kit check
+
+      - name: Gate tables (requirements, trace, verification)
+        if: always() && steps.model.outputs.present == 'true'
+        run: ./kit gen-table
+
+      - name: Requirement wording (reqlint, advisory)
+        if: always() && steps.model.outputs.present == 'true'
+        continue-on-error: true
+        run: ./kit lint
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.model.outputs.present == 'true'
+        with:
+          name: gate-tables
+          path: |
+            gates/tables/
+            out/check.md
+            out/check.json
+            out/parse.log

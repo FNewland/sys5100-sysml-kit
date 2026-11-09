@@ -1,0 +1,3 @@
+G2
+# Gate rules for ./kit check (first word). Change to G3 after your G2 board and to G4 after G3.
+# Instructors mark with an explicit --gate, so this setting does not change your grade.

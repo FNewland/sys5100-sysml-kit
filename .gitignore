@@ -1,0 +1,10 @@
+ext/
+build/
+out/
+diagrams/
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+# course sample files downloaded in Lab 4 (course material, not team evidence)
+samples/

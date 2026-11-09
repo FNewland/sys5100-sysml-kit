@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reqlint"
+version = "0.2.0"
+description = "SYS 5100 requirement quality checker (rules inspired by INCOSE GtWR characteristics; no GtWR text reproduced)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "CC0-1.0" }
+classifiers = ["License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication"]
+authors = [{ name = "Franz Newland" }]
+
+[project.scripts]
+reqlint = "reqlint.cli:main"
+
+[tool.setuptools]
+packages = ["reqlint"]
+
+[tool.setuptools.package-data]
+reqlint = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

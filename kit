@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# sysml-kit entry point: ./kit check | gen-table | lint | viz | init   (./kit --help)
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY="${KIT_PYTHON:-$(command -v python3 || command -v python)}"
+exec "$PY" "$HERE/tools/kit.py" "$@"
